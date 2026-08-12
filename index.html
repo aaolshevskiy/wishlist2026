@@ -363,6 +363,85 @@
     color:var(--gray-text);
     line-height:1.6;
   }
+
+  .guests-section{
+    margin-top:64px;
+  }
+  .guests-head{
+    text-align:center;
+    margin-bottom:26px;
+  }
+  .guests-head h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,3.6vw,34px);
+    margin:0 0 10px;
+    color:var(--pine);
+  }
+  .guests-head .sub{
+    margin:0 auto;
+  }
+
+  .guests-table-wrap{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  table.guests-table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  .guests-table thead th{
+    text-align:left;
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--pine);
+    background:var(--cream);
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .guests-table thead th:first-child{
+    border-right:1px solid var(--line);
+  }
+  .guests-table tbody td{
+    padding:0;
+    border-bottom:1px solid var(--line);
+  }
+  .guests-table tbody tr:last-child td{
+    border-bottom:none;
+  }
+  .guests-table tbody td:first-child{
+    border-right:1px solid var(--line);
+  }
+  .guests-table input{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    padding:12px 16px;
+  }
+  .guests-table input::placeholder{
+    color:#b9b3a0;
+  }
+  .guests-table input:focus{
+    background:var(--cream);
+  }
+  .guests-table tbody tr:nth-child(even){
+    background:rgba(40,70,60,0.02);
+  }
+  .row-num{
+    display:inline-block;
+    min-width:18px;
+    font-size:12px;
+    color:var(--gray-text);
+    margin-right:8px;
+  }
 </style>
 </head>
 <body>
@@ -379,7 +458,26 @@
 
     <div class="grid" id="grid"></div>
 
-    <footer class="note">Стан бронювання зберігається автоматично та оновлюється для всіх, хто відкриє цю сторінку.</footer>
+    <section class="guests-section" id="guestsSection">
+      <div class="guests-head">
+        <div class="eyebrow">Хто буде</div>
+        <h2>Список запрошених</h2>
+        <p class="sub">Впиши своє ім'я у відповідний рядок — чоловік/дружина зліва, діти праворуч.</p>
+      </div>
+      <div class="guests-table-wrap">
+        <table class="guests-table" id="guestsTable">
+          <thead>
+            <tr>
+              <th>Чоловік / дружина</th>
+              <th>Діти</th>
+            </tr>
+          </thead>
+          <tbody id="guestsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="note">Стан бронювання та список гостей зберігаються автоматично та оновлюються для всіх, хто відкриє цю сторінку.</footer>
   </div>
 
   <div class="overlay" id="overlay">
@@ -456,15 +554,26 @@ const ITEMS = [
     title: "Задонатити на гітару та тенісну ракетку",
     price: "Будь-яка сума",
     img: DONATE_IMG,
-    // TODO: встав сюди посилання на банку Monobank, коли воно буде готове
-    url: "",
+    url: "https://send.monobank.ua/jar/3vdAB4X8EG",
     description: "Гітару Yamaha й тенісну ракетку Wilson можна подарувати разом — і ви можете доєднатися до збору на будь-яку суму. Скинути кошти можна за посиланням на банку Monobank нижче, або ж передати особисто при зустрічі, якщо так буде зручніше.",
     emoji: "🎸"
   }
 ];
 
 const STORAGE_KEY = "wishlist-state";
-let state = {}; // { itemId: true/false }
+const LOCAL_KEY = "gift-wishlist-state-v1";
+const HAS_ARTIFACT_STORAGE = (typeof window !== "undefined" && !!window.storage);
+
+// Щоб дані бачили ВСІ, хто відкриває сторінку (навіть на інших пристроях),
+// встав сюди URL свого Google Apps Script Web App (див. інструкцію "cloud-setup.md").
+// Поки поле порожнє, дані зберігаються лише локально в цьому браузері.
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbw4YPZc0Sx1BV-uHYpTfcmJLTmbGuQxfaRdkUY05LNphQ5wIXCA6YTb3reffs97zFJ9pA/exec";
+
+const GUEST_ROWS = 14;
+let state = { reservations: {}, guests: [] }; // reservations: {itemId: true/false}, guests: [{adult, child}, ...]
+function emptyGuests(){
+  return Array.from({length: GUEST_ROWS}, () => ({adult: "", child: ""}));
+}
 let currentItem = null;
 
 const grid = document.getElementById("grid");
@@ -486,14 +595,14 @@ function showToast(msg){
 function updateProgress(){
   const reservable = ITEMS.filter(i => i.type !== "donate");
   const total = reservable.length;
-  const done = reservable.filter(i => state[i.id]).length;
+  const done = reservable.filter(i => state.reservations[i.id]).length;
   progressText.textContent = `${done} з ${total} заброньовано`;
   progressFill.style.width = (done/total*100) + "%";
 }
 
 function renderCard(item){
   const isDonate = item.type === "donate";
-  const reserved = !isDonate && !!state[item.id];
+  const reserved = !isDonate && !!state.reservations[item.id];
   const card = document.createElement("div");
   card.className = "card" + (reserved ? " reserved" : "");
   card.tabIndex = 0;
@@ -570,7 +679,7 @@ function openModal(item){
     modalLink.textContent = "Переглянути товар →";
     modalLink.removeAttribute("aria-disabled");
 
-    const reserved = !!state[item.id];
+    const reserved = !!state.reservations[item.id];
     reserveToggle.checked = reserved;
     reserveSub.textContent = reserved ? "Заброньовано — можна зняти позначку" : "Ще не заброньовано";
   }
@@ -594,7 +703,7 @@ document.addEventListener("keydown", (e) => {
 reserveToggle.addEventListener("change", async () => {
   if(!currentItem) return;
   const checked = reserveToggle.checked;
-  state[currentItem.id] = checked;
+  state.reservations[currentItem.id] = checked;
   reserveSub.textContent = checked ? "Заброньовано — можна зняти позначку" : "Ще не заброньовано";
 
   // update the card behind the modal immediately
@@ -609,25 +718,152 @@ reserveToggle.addEventListener("change", async () => {
 });
 
 async function saveState(){
+  // 1. Завжди кешуємо локально — найшвидше і завжди працює
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
-    showToast("Збережено");
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
   }catch(err){
-    console.error("Storage error:", err);
-    showToast("Не вдалося зберегти");
+    console.error("localStorage save error:", err);
   }
+
+  let cloudOk = true;
+  // 2. Якщо налаштовано хмарне сховище (Google Apps Script) — пишемо туди,
+  //    щоб зміни бачили всі, хто відкриє сторінку
+  if(CLOUD_API_URL){
+    try{
+      const res = await fetch(CLOUD_API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "text/plain;charset=utf-8"},
+        body: JSON.stringify(state)
+      });
+      if(!res.ok) cloudOk = false;
+    }catch(err){
+      console.error("Cloud storage error:", err);
+      cloudOk = false;
+    }
+  }
+
+  // 3. Якщо сторінка відкрита всередині Claude — дублюємо і туди
+  if(HAS_ARTIFACT_STORAGE){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+    }catch(err){
+      console.error("Artifact storage error:", err);
+    }
+  }
+
+  showToast(cloudOk ? "Збережено" : "Збережено локально (хмара недоступна)");
 }
 
 async function loadState(){
-  try{
-    const result = await window.storage.get(STORAGE_KEY, true);
-    if(result && result.value){
-      state = JSON.parse(result.value);
+  let loaded = false;
+
+  // 1. Пріоритет — хмарне сховище, воно спільне для всіх
+  if(CLOUD_API_URL){
+    try{
+      const res = await fetch(CLOUD_API_URL);
+      if(res.ok){
+        const data = await res.json();
+        if(data && typeof data === "object"){
+          state = data;
+          loaded = true;
+        }
+      }
+    }catch(err){
+      console.error("Cloud storage load error:", err);
     }
-  }catch(err){
-    state = {};
   }
+
+  // 2. Якщо хмара недоступна/не налаштована — пробуємо сховище артефакту Claude
+  if(!loaded && HAS_ARTIFACT_STORAGE){
+    try{
+      const result = await window.storage.get(STORAGE_KEY, true);
+      if(result && result.value){
+        state = JSON.parse(result.value);
+        loaded = true;
+      }
+    }catch(err){
+      // ключа ще немає — це нормально при першому запуску
+    }
+  }
+
+  // 3. Останній варіант — локальний кеш цього браузера
+  if(!loaded){
+    try{
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if(raw){
+        state = JSON.parse(raw);
+        loaded = true;
+      }
+    }catch(err){
+      console.error("localStorage load error:", err);
+    }
+  }
+
+  if(!loaded) state = { reservations: {}, guests: emptyGuests() };
+  state = normalizeState(state);
   renderGrid();
+  renderGuests();
+}
+
+function normalizeState(raw){
+  if(!raw || typeof raw !== "object"){
+    return { reservations: {}, guests: emptyGuests() };
+  }
+  // Підтримка старого формату, де весь об'єкт був мапою itemId -> bool
+  const hasNewShape = ("reservations" in raw) || ("guests" in raw);
+  let reservations = hasNewShape ? (raw.reservations || {}) : raw;
+  let guests = hasNewShape ? (raw.guests || []) : [];
+
+  // Гарантуємо рівно GUEST_ROWS рядків
+  const normalizedGuests = emptyGuests();
+  for(let i = 0; i < GUEST_ROWS; i++){
+    if(guests[i]){
+      normalizedGuests[i] = {
+        adult: typeof guests[i].adult === "string" ? guests[i].adult : "",
+        child: typeof guests[i].child === "string" ? guests[i].child : ""
+      };
+    }
+  }
+
+  return { reservations, guests: normalizedGuests };
+}
+
+function renderGuests(){
+  const body = document.getElementById("guestsBody");
+  body.innerHTML = "";
+  for(let i = 0; i < GUEST_ROWS; i++){
+    const row = state.guests[i] || {adult:"", child:""};
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" data-row="${i}" data-col="adult" placeholder="Ім'я ${i+1}" value="${escapeAttr(row.adult)}" autocomplete="off"></td>
+      <td><input type="text" data-row="${i}" data-col="child" placeholder="Ім'я дитини" value="${escapeAttr(row.child)}" autocomplete="off"></td>
+    `;
+    body.appendChild(tr);
+  }
+
+  body.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", onGuestInput);
+    input.addEventListener("blur", () => saveState());
+  });
+}
+
+function escapeAttr(str){
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+let guestSaveTimer = null;
+function onGuestInput(e){
+  const row = parseInt(e.target.dataset.row, 10);
+  const col = e.target.dataset.col;
+  if(!state.guests[row]) state.guests[row] = {adult:"", child:""};
+  state.guests[row][col] = e.target.value;
+
+  clearTimeout(guestSaveTimer);
+  guestSaveTimer = setTimeout(() => saveState(), 700);
 }
 
 loadState();

@@ -397,43 +397,46 @@
     text-align:left;
     font-family:'Fraunces',serif;
     font-weight:600;
-    font-size:14px;
+    font-size:13px;
     color:var(--pine);
     background:var(--cream);
-    padding:12px 16px;
+    padding:12px 10px;
     border-bottom:1px solid var(--line);
   }
-  .guests-table thead th:first-child{
+  .guests-table thead th.col-check{
+    text-align:center;
+  }
+  .guests-table thead th:not(:last-child){
     border-right:1px solid var(--line);
   }
   .guests-table tbody td{
-    padding:0;
+    padding:12px 10px;
     border-bottom:1px solid var(--line);
+    font-size:14px;
+    color:var(--ink);
   }
   .guests-table tbody tr:last-child td{
     border-bottom:none;
   }
-  .guests-table tbody td:first-child{
+  .guests-table tbody td:not(:last-child){
     border-right:1px solid var(--line);
   }
-  .guests-table input{
-    width:100%;
-    border:none;
-    outline:none;
-    background:transparent;
-    font-family:'Inter',sans-serif;
-    font-size:14px;
-    color:var(--ink);
-    padding:12px 16px;
+  .guests-table td.col-name{
+    font-weight:600;
+    font-family:'Fraunces',serif;
+    color:var(--pine);
   }
-  .guests-table input::placeholder{
-    color:#b9b3a0;
-  }
-  .guests-table input:focus{
-    background:var(--cream);
+  .guests-table td.col-check{
+    text-align:center;
   }
   .guests-table tbody tr:nth-child(even){
     background:rgba(40,70,60,0.02);
+  }
+  .guest-checkbox{
+    width:20px;
+    height:20px;
+    cursor:pointer;
+    accent-color:var(--pine);
   }
   .row-num{
     display:inline-block;
@@ -442,16 +445,83 @@
     color:var(--gray-text);
     margin-right:8px;
   }
+
+  .invite-section{
+    text-align:center;
+    padding-bottom:40px;
+    margin-bottom:40px;
+    border-bottom:1px solid var(--line);
+  }
+  .invite-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(30px,4.6vw,44px);
+    margin:0 0 18px;
+    color:var(--pine);
+  }
+  .invite-text{
+    max-width:560px;
+    margin:0 auto 22px;
+    font-size:15.5px;
+    line-height:1.65;
+    color:#454540;
+  }
+  .invite-text strong{
+    color:var(--clay);
+  }
+  .invite-text-muted{
+    font-size:13.5px;
+    color:#6a6a62;
+  }
+  .invite-photo{
+    width:220px;
+    height:220px;
+    border-radius:50%;
+    margin:0 auto 22px;
+    overflow:hidden;
+    background:linear-gradient(135deg,var(--gold-soft),var(--gold));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 16px 32px rgba(31,42,36,0.18);
+    border:6px solid var(--paper);
+  }
+  .invite-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .invite-photo-fallback{
+    font-size:56px;
+  }
 </style>
 </head>
 <body>
   <div class="wrap">
+    <section class="invite-section">
+      <div class="eyebrow">Запрошення</div>
+      <h1 class="invite-title">Привіт! 🎉</h1>
+      <p class="invite-text">
+        Якщо ти отримав це посилання — значить, я хочу запросити тебе на святкування свого дня народження!
+      </p>
+      <div class="invite-photo" id="invitePhoto">
+        <span class="invite-photo-fallback">📸</span>
+      </div>
+      <p class="invite-text">
+        Святкуємо <strong>23 серпня, у неділю</strong>. Місце трохи пізніше — окремо надішлю посилання на локацію.
+        Буду щиро радий бачити тебе у себе на святі!
+      </p>
+      <p class="invite-text invite-text-muted">
+        Нижче можна обрати подарунок зі списку або задонатити на спільний подарунок — один подарунок можуть скидатись кілька людей чи родин разом, тож не соромся приєднатися до когось, хто вже забронював. А ще нижче — список гостей: познач, чи прийдеш і чи будеш із дітьми.
+      </p>
+    </section>
+
     <header class="top">
       <div class="eyebrow">Вішлист подарунків</div>
       <h1>Що подарувати</h1>
       <p class="sub">Натисни на подарунок, щоб побачити ціну й посилання. Познач "Заброньовано", щоб інші бачили, що цей вибір уже зроблено. Є ще й варіант скинутись — дивись картку "Донат".</p>
       <div class="progress">
-        <span id="progressText">0 з 4 заброньовано</span>
+        <span id="progressText">0 з 5 заброньовано</span>
         <div class="bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
       </div>
     </header>
@@ -462,14 +532,16 @@
       <div class="guests-head">
         <div class="eyebrow">Хто буде</div>
         <h2>Список запрошених</h2>
-        <p class="sub">Впиши своє ім'я у відповідний рядок — чоловік/дружина зліва, діти праворуч.</p>
+        <p class="sub">Познач навпроти свого імені, чи прийдеш, і чи будеш із дітьми.</p>
       </div>
       <div class="guests-table-wrap">
         <table class="guests-table" id="guestsTable">
           <thead>
             <tr>
-              <th>Чоловік / дружина</th>
-              <th>Діти</th>
+              <th class="col-name">Гість</th>
+              <th class="col-check">Будемо</th>
+              <th class="col-check">Не будемо</th>
+              <th class="col-check">З дітьми</th>
             </tr>
           </thead>
           <tbody id="guestsBody"></tbody>
@@ -549,13 +621,22 @@ const ITEMS = [
     emoji: "🎥"
   },
   {
+    id: "aurum-optics-card",
+    title: "Karta podarunkowa Aurum-Optics",
+    price: "100 / 200 / 250 / 500 / 1000 zł",
+    priceNote: "aurum-optics.pl · номінал обирається при покупці, дійсна 12 місяців",
+    url: "https://aurum-optics.pl/karty-podarunkowe",
+    img: "https://static4.redcart.pl/templates/images/thumb/2300/900/500/pl/1/templates/images/products/2300/d5e6447806ce40e80fdde15f072641da.jpg",
+    emoji: "👓"
+  },
+  {
     id: "donate-guitar-racket",
     type: "donate",
     title: "Задонатити на гітару та тенісну ракетку",
     price: "Будь-яка сума",
     img: DONATE_IMG,
     url: "https://send.monobank.ua/jar/3vdAB4X8EG",
-    description: "Гітару Yamaha й тенісну ракетку Wilson можна подарувати разом — і ви можете доєднатися до збору на будь-яку суму. Скинути кошти можна за посиланням на банку Monobank нижче, або ж передати особисто при зустрічі, якщо так буде зручніше.",
+    description: "Гітару Yamaha й тенісну ракетку Wilson можна подарувати разом — і ви можете доєднатися до збору на будь-яку суму. Скинути кошти можна за посиланням на банку Monobank нижче (Apple Pay з польської картки працює так само просто, як і з української), або ж передати особисто при зустрічі, якщо так буде зручніше.",
     emoji: "🎸"
   }
 ];
@@ -569,10 +650,19 @@ const HAS_ARTIFACT_STORAGE = (typeof window !== "undefined" && !!window.storage)
 // Поки поле порожнє, дані зберігаються лише локально в цьому браузері.
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbw4YPZc0Sx1BV-uHYpTfcmJLTmbGuQxfaRdkUY05LNphQ5wIXCA6YTb3reffs97zFJ9pA/exec";
 
-const GUEST_ROWS = 14;
-let state = { reservations: {}, guests: [] }; // reservations: {itemId: true/false}, guests: [{adult, child}, ...]
+const GUEST_NAMES = [
+  "Я і Бодя",
+  "Мама, папа",
+  "Наташа з Максом",
+  "Ваня і Таня Лапи",
+  "Саша і Галя",
+  "Дарек і Наталія",
+  "Саша і Ріта"
+];
+const GUEST_ROWS = GUEST_NAMES.length;
+let state = { reservations: {}, guests: [] }; // reservations: {itemId: true/false}, guests: [{status: null|"yes"|"no", withKids: bool}, ...]
 function emptyGuests(){
-  return Array.from({length: GUEST_ROWS}, () => ({adult: "", child: ""}));
+  return Array.from({length: GUEST_ROWS}, () => ({status: null, withKids: false}));
 }
 let currentItem = null;
 
@@ -814,13 +904,14 @@ function normalizeState(raw){
   let reservations = hasNewShape ? (raw.reservations || {}) : raw;
   let guests = hasNewShape ? (raw.guests || []) : [];
 
-  // Гарантуємо рівно GUEST_ROWS рядків
+  // Гарантуємо рівно GUEST_ROWS рядків (за іменами з GUEST_NAMES, у тому ж порядку)
   const normalizedGuests = emptyGuests();
   for(let i = 0; i < GUEST_ROWS; i++){
-    if(guests[i]){
+    if(guests[i] && typeof guests[i] === "object"){
+      const status = (guests[i].status === "yes" || guests[i].status === "no") ? guests[i].status : null;
       normalizedGuests[i] = {
-        adult: typeof guests[i].adult === "string" ? guests[i].adult : "",
-        child: typeof guests[i].child === "string" ? guests[i].child : ""
+        status,
+        withKids: !!guests[i].withKids
       };
     }
   }
@@ -832,18 +923,19 @@ function renderGuests(){
   const body = document.getElementById("guestsBody");
   body.innerHTML = "";
   for(let i = 0; i < GUEST_ROWS; i++){
-    const row = state.guests[i] || {adult:"", child:""};
+    const row = state.guests[i] || {status: null, withKids: false};
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><input type="text" data-row="${i}" data-col="adult" placeholder="Ім'я ${i+1}" value="${escapeAttr(row.adult)}" autocomplete="off"></td>
-      <td><input type="text" data-row="${i}" data-col="child" placeholder="Ім'я дитини" value="${escapeAttr(row.child)}" autocomplete="off"></td>
+      <td class="col-name">${escapeAttr(GUEST_NAMES[i])}</td>
+      <td class="col-check"><input class="guest-checkbox" type="checkbox" data-row="${i}" data-field="yes" ${row.status === "yes" ? "checked" : ""}></td>
+      <td class="col-check"><input class="guest-checkbox" type="checkbox" data-row="${i}" data-field="no" ${row.status === "no" ? "checked" : ""}></td>
+      <td class="col-check"><input class="guest-checkbox" type="checkbox" data-row="${i}" data-field="kids" ${row.withKids ? "checked" : ""}></td>
     `;
     body.appendChild(tr);
   }
 
-  body.querySelectorAll("input").forEach(input => {
-    input.addEventListener("input", onGuestInput);
-    input.addEventListener("blur", () => saveState());
+  body.querySelectorAll("input.guest-checkbox").forEach(input => {
+    input.addEventListener("change", onGuestCheckboxChange);
   });
 }
 
@@ -855,15 +947,22 @@ function escapeAttr(str){
     .replaceAll(">","&gt;");
 }
 
-let guestSaveTimer = null;
-function onGuestInput(e){
+function onGuestCheckboxChange(e){
   const row = parseInt(e.target.dataset.row, 10);
-  const col = e.target.dataset.col;
-  if(!state.guests[row]) state.guests[row] = {adult:"", child:""};
-  state.guests[row][col] = e.target.value;
+  const field = e.target.dataset.field;
+  if(!state.guests[row]) state.guests[row] = {status: null, withKids: false};
 
-  clearTimeout(guestSaveTimer);
-  guestSaveTimer = setTimeout(() => saveState(), 700);
+  if(field === "yes"){
+    state.guests[row].status = e.target.checked ? "yes" : null;
+  }else if(field === "no"){
+    state.guests[row].status = e.target.checked ? "no" : null;
+  }else if(field === "kids"){
+    state.guests[row].withKids = e.target.checked;
+  }
+
+  // "Будемо" і "Не будемо" не можуть бути позначені одночасно
+  renderGuests();
+  saveState();
 }
 
 loadState();

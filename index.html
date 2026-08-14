@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Донат на подарунок</title>
+<title>Збір на подарунок</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -530,13 +530,13 @@
         Буду щиро радий бачити тебе у себе на святі!
       </p>
       <p class="invite-text invite-text-muted">
-        Цього року вішлиста не буде — натомість спільний збір, до якого можна доєднатися на будь-яку суму. Деталі нижче👇
+        Цього року вішлиста не буде — натомість спільний збір на головний подарунок, до якого можна доєднатися на будь-яку суму. Деталі нижче👇
       </p>
     </section>
 
     <header class="top">
       <div class="eyebrow">На день народження</div>
-      <h1>Задонать на подарунок</h1>
+      <h1>Збираю на ракетку та гітару</h1>
       <p class="sub">Натисни на картку нижче, щоб побачити опис і посилання на банку Monobank. Долучитися можна на будь-яку суму — і скільки завгодно людей.</p>
     </header>
 
@@ -601,7 +601,7 @@ const ITEMS = [
   {
     id: "donate-guitar-racket",
     type: "donate",
-    title: "Задонатити на гітару та тенісну ракетку",
+    title: "Зібрати на гітару та тенісну ракетку",
     price: "Будь-яка сума",
     img: DONATE_IMG,
     url: "https://send.monobank.ua/jar/3vdAB4X8EG",
@@ -677,7 +677,7 @@ function renderCard(item){
   card.dataset.id = item.id;
 
   const badgeHtml = isDonate
-    ? `<span class="badge donate-badge">Донат</span>`
+    ? `<span class="badge donate-badge">Збір</span>`
     : `<span class="badge">${reserved ? "Заброньовано" : "Вільно"}</span>`;
 
   card.innerHTML = `
